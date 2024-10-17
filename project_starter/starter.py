@@ -1,5 +1,7 @@
 import os
 import sys
+import threading
+from functools import partial
 
 import colorama
 
@@ -24,6 +26,7 @@ from template.response_generator.response_class_map import ResponseClassMap
 DomainInitializer.initEachDomain()
 UserDefinedProtocolRegister.registerUserDefinedProtocol()
 
+stop_event = threading.Event()
 
 if __name__ == "__main__":
     colorama.init(autoreset=True)
@@ -55,22 +58,39 @@ if __name__ == "__main__":
 
         threadWorkerPoolService = ThreadWorkerPoolServiceImpl.getInstance()
 
-        # Initialize Thread Pools
-        threadWorkerPoolService.createThreadWorkerPool("Receiver", 6)
-        threadWorkerPoolService.allocateExecuteFunction("Receiver", receiverService.requestToReceiveCommand)
-        receiverFutures = threadWorkerPoolService.executeThreadPoolWorker("Receiver")
+        for receiverId in range(6):
+            threadWorkerPoolService.executeThreadPoolWorker(
+                f"Receiver-{receiverId}",
+                partial(receiverService.requestToReceiveCommand, receiverId)
+            )
 
-        threadWorkerPoolService.createThreadWorkerPool("CommandAnalyzer", 6)
-        threadWorkerPoolService.allocateExecuteFunction("CommandAnalyzer", commandAnalyzerService.analysisCommand)
-        threadWorkerPoolService.executeThreadPoolWorker("CommandAnalyzer")
+            # Command Analyzer Thread Pool (6개)
+        for analyzerId in range(6):
+            threadWorkerPoolService.executeThreadPoolWorker(
+                f"CommandAnalyzer-{analyzerId}",
+                partial(commandAnalyzerService.analysisCommand, analyzerId)
+            )
 
-        threadWorkerPoolService.createThreadWorkerPool("CommandExecutor", 5)
-        threadWorkerPoolService.allocateExecuteFunction("CommandExecutor", commandExecutorService.executeCommand)
-        threadWorkerPoolService.executeThreadPoolWorker("CommandExecutor")
+            # Command Executor Thread Pool (5개)
+        for executorId in range(5):
+            threadWorkerPoolService.executeThreadPoolWorker(
+                f"CommandExecutor-{executorId}",
+                partial(commandExecutorService.executeCommand, executorId)
+            )
 
-        threadWorkerPoolService.createThreadWorkerPool("Transmitter", 1)
-        threadWorkerPoolService.allocateExecuteFunction("Transmitter", transmitterService.requestToTransmitResult)
-        threadWorkerPoolService.executeThreadPoolWorker("Transmitter")
+            # Transmitter Thread Pool (1개)
+        threadWorkerPoolService.executeThreadPoolWorker(
+            "Transmitter-0",
+            partial(transmitterService.requestToTransmitResult, 0)  # 단일 ID 사용
+        )
+
+        # 프로그램 종료를 위한 이벤트 대기
+        while not stop_event.is_set():
+            threading.Event().wait(1)  # 1초 대기
 
     except Exception as e:
         ColorPrinter.print_important_message(f"An error occurred: {e}")
+
+    finally:
+        # 스레드 풀 종료
+        threadWorkerPoolService.shutdownAll()
