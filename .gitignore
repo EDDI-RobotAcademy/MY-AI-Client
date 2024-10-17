@@ -298,3 +298,6 @@ pyrightconfig.json
 *.pem
 *.crt
 *.key
+
+#
+*.Identifier
