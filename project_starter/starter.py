@@ -15,6 +15,7 @@ from template.os_detector.detect import OperatingSystemDetector
 from template.os_detector.operating_system import OperatingSystem
 from template.receiver.service.receiver_service_impl import ReceiverServiceImpl
 from template.thread_worker.service.thread_worker_service_impl import ThreadWorkerServiceImpl
+from template.thread_worker_pool.service.thread_worker_pool_service_impl import ThreadWorkerPoolServiceImpl
 from template.transmitter.service.transmitter_service_impl import TransmitterServiceImpl
 from template.utility.color_print import ColorPrinter
 from template.request_generator.request_class_map import RequestClassMap
@@ -38,28 +39,38 @@ if __name__ == "__main__":
         ColorPrinter.print_important_message("범용 운영체제 외에는 실행 할 수 없습니다!")
         exit(1)
 
-    clientSocketService = ClientSocketServiceImpl.getInstance()
-    clientSocket = clientSocketService.createClientSocket()
-    clientSocketService.connectToTargetHostUnitSuccess()
+    try:
+        clientSocketService = ClientSocketServiceImpl.getInstance()
+        clientSocket = clientSocketService.createClientSocket()
+        clientSocketService.connectToTargetHostUnitSuccess()
 
-    transmitterService = TransmitterServiceImpl.getInstance()
-    transmitterService.requestToInjectUserDefinedResponseClassMapInstance(responseClassMapInstance)
+        transmitterService = TransmitterServiceImpl.getInstance()
+        transmitterService.requestToInjectUserDefinedResponseClassMapInstance(responseClassMapInstance)
 
-    receiverService = ReceiverServiceImpl.getInstance()
-    receiverService.requestToInjectUserDefinedRequestClassMapInstance(requestClassMapInstance)
+        receiverService = ReceiverServiceImpl.getInstance()
+        receiverService.requestToInjectUserDefinedRequestClassMapInstance(requestClassMapInstance)
 
-    commandAnalyzerService = CommandAnalyzerServiceImpl.getInstance()
-    commandExecutorService = CommandExecutorServiceImpl.getInstance()
+        commandAnalyzerService = CommandAnalyzerServiceImpl.getInstance()
+        commandExecutorService = CommandExecutorServiceImpl.getInstance()
 
-    threadWorkerService = ThreadWorkerServiceImpl.getInstance()
-    threadWorkerService.createThreadWorker("Receiver", receiverService.requestToReceiveCommand)
-    threadWorkerService.executeThreadWorker("Receiver")
+        threadWorkerPoolService = ThreadWorkerPoolServiceImpl.getInstance()
 
-    threadWorkerService.createThreadWorker("CommandAnalyzer", commandAnalyzerService.analysisCommand)
-    threadWorkerService.executeThreadWorker("CommandAnalyzer")
+        # Initialize Thread Pools
+        threadWorkerPoolService.createThreadWorkerPool("Receiver", 6)
+        threadWorkerPoolService.allocateExecuteFunction("Receiver", receiverService.requestToReceiveCommand)
+        receiverFutures = threadWorkerPoolService.executeThreadPoolWorker("Receiver")
 
-    threadWorkerService.createThreadWorker("CommandExecutor", commandExecutorService.executeCommand)
-    threadWorkerService.executeThreadWorker("CommandExecutor")
+        threadWorkerPoolService.createThreadWorkerPool("CommandAnalyzer", 6)
+        threadWorkerPoolService.allocateExecuteFunction("CommandAnalyzer", commandAnalyzerService.analysisCommand)
+        threadWorkerPoolService.executeThreadPoolWorker("CommandAnalyzer")
 
-    threadWorkerService.createThreadWorker("Transmitter", transmitterService.requestToTransmitResult)
-    threadWorkerService.executeThreadWorker("Transmitter")
+        threadWorkerPoolService.createThreadWorkerPool("CommandExecutor", 5)
+        threadWorkerPoolService.allocateExecuteFunction("CommandExecutor", commandExecutorService.executeCommand)
+        threadWorkerPoolService.executeThreadPoolWorker("CommandExecutor")
+
+        threadWorkerPoolService.createThreadWorkerPool("Transmitter", 1)
+        threadWorkerPoolService.allocateExecuteFunction("Transmitter", transmitterService.requestToTransmitResult)
+        threadWorkerPoolService.executeThreadPoolWorker("Transmitter")
+
+    except Exception as e:
+        ColorPrinter.print_important_message(f"An error occurred: {e}")
