@@ -1,6 +1,11 @@
 import os
 import openai
-from typing import List
+import asyncio
+
+from typing import List, Dict, Any
+
+from langchain_core.callbacks import AsyncCallbackHandler
+from langchain_core.outputs import LLMResult
 
 from growth_strategy.repository.growth_strategy_repository import GrowthStrategyRepository
 from langchain_text_splitters import TextSplitter
@@ -19,6 +24,24 @@ if not openai.api_key:
 
 os.environ["OPENAI_API_KEY"] = openai.api_key
 environ = os.getenv("ENV")
+
+class MyCustomAsyncHandler(AsyncCallbackHandler):
+    """Async callback handler that can be used to handle callbacks from langchain."""
+
+    async def on_llm_start(
+            self, serialized: Dict[str, Any], prompts: List[str], **kwargs: Any
+    ) -> None:
+        """Run when chain starts running."""
+        print("zzzz....")
+        await asyncio.sleep(0.1)
+        print("Hi! I just woke up. Your llm is starting")
+
+    async def on_llm_end(self, response: LLMResult, **kwargs: Any) -> None:
+        """Run when chain ends running."""
+        print("zzzz....")
+        await asyncio.sleep(0.1)
+        print("Hi! I just woke up. Your llm is ending")
+
 
 class BracketSplitter(TextSplitter):
     def split_text(self, text: str) -> List[str]:
@@ -91,14 +114,10 @@ class GrowthStrategyRepositoryImpl(GrowthStrategyRepository):
             # 단계 1: 문서 로드(Load Documents)
             # 현재 작업 디렉터리 경로를 얻기
             current_dir = os.getcwd()
-            if environ == 'develop':
-                file_path = os.path.join(current_dir, "../", "data", "influencer-feature.txt")
-            else:
-                file_path = os.path.join(current_dir, "data", "influencer-feature.txt")
+            file_path = os.path.join(current_dir, "data", "influencer-feature.txt")
 
             loader = TextLoader(file_path, encoding="utf-8")
             docs = loader.load()
-
             # 단계 2: 문서 분할(Split Documents)
             text_splitter = BracketSplitter()
             split_documents = text_splitter.split_documents(docs)
@@ -112,8 +131,8 @@ class GrowthStrategyRepositoryImpl(GrowthStrategyRepository):
             # 단계 5: 검색기 생성
             retriever = vectorstore.as_retriever()
 
-            # 단계 7: LLM 모델 생성
-            llm = ChatOpenAI(model_name="gpt-4o-mini", temperature=0)
+            # 단계 7: LLM 모델 생성 (call back함수 등록)
+            llm = ChatOpenAI(model_name="gpt-4o-mini", temperature=0, callbacks=[MyCustomAsyncHandler()])
 
             # 단계 8: 체인 생성
             question = "Ref의 format을 참조해서 해당 인플루언서가 효과적으로 성장할 수 있는 전략을 제시해 주세요."
@@ -130,7 +149,8 @@ class GrowthStrategyRepositoryImpl(GrowthStrategyRepository):
                     | StrOutputParser()
             )
             # 단계 9: 체인 실행
-            strategy = chain.invoke(question)
-            return strategy
+            strategy = chain.invoke(question) # 여기서 에러 터짐
+            print(strategy)
+            return {"generatedText": strategy}  # dict 형식으로 반환해주어야 함
         except Exception as e:
             return f"오류 발생: {e}"

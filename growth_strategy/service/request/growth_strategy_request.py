@@ -21,5 +21,5 @@ class GrowthStrategyRequest(BaseRequest):
         }
 
     def __str__(self):
-		    # request 이름
+        # request 이름
         return f"GrowthStrategyRequest(protocolNumber={self.__protocolNumber}, parameterList={self.parameterList})"
