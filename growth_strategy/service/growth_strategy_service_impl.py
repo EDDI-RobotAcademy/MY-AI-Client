@@ -21,18 +21,18 @@ class GrowthStrategyServiceImpl(GrowthStrategyService):
     async def generateGrowthStrategy(self, *args):
         try:
             print(f"GrowthStrategyService!")
-            gender = args[0]
-            age_group = args[1]
-            mbti = args[2]
-            topic = args[3]
-            strength = args[4]
-            reveal = args[5]
-            platform = args[6]
+
+            ages = args[0]
+            genders = args[1]
+            content_categories = args[2]
+            visibility = args[3]
+            platforms = args[4]
+            investment_amount = args[5]
+            upload_frequency = args[6]
             interested_influencer = args[7]
 
-            return await self.__GrowthStrategyRepository.fetch_growth_strategy(
-            gender, age_group, mbti, topic, strength, reveal, platform, interested_influencer
-            )
+            return await self.__GrowthStrategyRepository.fetch_growth_strategy(content_categories, ages, genders,
+            visibility, platforms, investment_amount, upload_frequency, interested_influencer)
         except Exception as e:
             print(e)
             raise Exception from e
