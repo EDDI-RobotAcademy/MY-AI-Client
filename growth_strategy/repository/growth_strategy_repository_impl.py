@@ -64,7 +64,7 @@ class GrowthStrategyRepositoryImpl(GrowthStrategyRepository):
 
         return cls.__instance
 
-    async def fetch_growth_strategy(self, content_categories, ages, genders, visibility, platforms, investment_amount, upload_frequency, interested_influencer):
+    async def fetch_growth_strategy(self, content_categories, ages, genders, visibility, platforms, investment_amount, upload_frequency, interested_influencer, userToken, request_id):
 
         prompt = PromptTemplate.from_template("""
                          user_input :( 컨텐츠 : {content_categories} 
@@ -127,6 +127,6 @@ class GrowthStrategyRepositoryImpl(GrowthStrategyRepository):
             # 단계 9: 체인 실행
             strategy = chain.invoke(question) # 여기서 에러 터짐
             print(strategy)
-            return {"generatedText": strategy}  # dict 형식으로 반환해주어야 함
+            return {"generatedText": strategy, "userToken": userToken, "request_id": request_id}  # dict 형식으로 반환해주어야 함
         except Exception as e:
             return f"오류 발생: {e}"
