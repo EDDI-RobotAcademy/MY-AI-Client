@@ -31,8 +31,11 @@ class GrowthStrategyServiceImpl(GrowthStrategyService):
             upload_frequency = args[6]
             interested_influencer = args[7]
 
+            userToken = args[8]
+            request_id = args[9]
+
             return await self.__GrowthStrategyRepository.fetch_growth_strategy(content_categories, ages, genders,
-            visibility, platforms, investment_amount, upload_frequency, interested_influencer)
+            visibility, platforms, investment_amount, upload_frequency, interested_influencer, userToken, request_id)
         except Exception as e:
             print(e)
             raise Exception from e
