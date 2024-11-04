@@ -8,6 +8,9 @@ from first_user_defined_function_domain.service.response.fudf_just_for_test_resp
 from growth_strategy.service.growth_strategy_service_impl import GrowthStrategyServiceImpl
 from growth_strategy.service.request.growth_strategy_request import GrowthStrategyRequest
 from growth_strategy.service.response.growth_strategy_response import GrowthStrategyResponse
+from ollama_strategy.service.ollama_strategy_service_impl import OllamaStrategyServiceImpl
+from ollama_strategy.service.request.ollama_strategy_request import OllamaStrategyRequest
+from ollama_strategy.service.response.ollama_strategy_response import OllamaStrategyResponse
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'template'))
 
@@ -68,6 +71,31 @@ class UserDefinedProtocolRegister:
             GrowthStrategyService.generateGrowthStrategy
         )
 
+    @staticmethod
+    def registerOllamaStrategyProtocol():
+        customProtocolService = CustomProtocolServiceImpl.getInstance()
+        OllamaStrategyService = OllamaStrategyServiceImpl.getInstance()
+
+        # 여러분들이 구성한 것 (프로토콜과 request 등록)
+        requestClassMapInstance = RequestClassMap.getInstance()
+        requestClassMapInstance.addRequestClass(
+            UserDefinedProtocolNumber.MY_TEAM_OLLAMA_STRATEGY,
+            OllamaStrategyRequest
+        )
+
+        # 여러분들이 구성한 것 (프로토콜과 response 등록)
+        responseClassMapInstance = ResponseClassMap.getInstance()
+        responseClassMapInstance.addResponseClass(
+            UserDefinedProtocolNumber.MY_TEAM_OLLAMA_STRATEGY,
+            OllamaStrategyResponse
+        )
+
+        # 여러분들이 구성한 것 (프로토콜과 구동할 함수 등록)
+        customProtocolService.registerCustomProtocol(
+            UserDefinedProtocolNumber.MY_TEAM_OLLAMA_STRATEGY,
+            OllamaStrategyService.generateOllamaStrategy
+        )
+
 
 	# 초기 구동에서 호출하는 부분
     @staticmethod
@@ -76,3 +104,4 @@ class UserDefinedProtocolRegister:
         UserDefinedProtocolRegister.registerDefaultUserDefinedProtocol()
 	    # 여러분의 사용자 정의형 프로토콜 등록 파트
         UserDefinedProtocolRegister.registerGrowthStrategyProtocol()
+        UserDefinedProtocolRegister.registerOllamaStrategyProtocol()

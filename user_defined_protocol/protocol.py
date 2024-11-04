@@ -6,7 +6,7 @@ class UserDefinedProtocolNumber(Enum):
 
     # 추가된 프로토콜 for growth_strategy test
     MY_TEAM_GROWTH_STRATEGY = 7
-
+    MY_TEAM_OLLAMA_STRATEGY = 8
     # 기존에 있던 테스트용 프로토콜
     FIRST_USER_DEFINED_FUNCTION_FOR_TEST = 5
 
