@@ -1,13 +1,13 @@
-from growth_strategy.repository.growth_strategy_repository_impl import GrowthStrategyRepositoryImpl
-from growth_strategy.service.growth_strategy_service import GrowthStrategyService
+from ollama_strategy.repository.ollama_strategy_repository_impl import OllamaStrategyRepositoryImpl
+from ollama_strategy.service.ollama_strategy_service import OllamaStrategyService
 
-class GrowthStrategyServiceImpl(GrowthStrategyService):
+class OllamaStrategyServiceImpl(OllamaStrategyService):
     __instance = None
 
     def __new__(cls):
         if cls.__instance is None:
             cls.__instance = super().__new__(cls)
-            cls.__instance.__GrowthStrategyRepository = GrowthStrategyRepositoryImpl.getInstance()
+            cls.__instance.__OllamaStrategyRepository = OllamaStrategyRepositoryImpl.getInstance()
 
         return cls.__instance
 
@@ -18,9 +18,9 @@ class GrowthStrategyServiceImpl(GrowthStrategyService):
 
         return cls.__instance
 
-    async def generateGrowthStrategy(self, *args):
+    async def generateOllamaStrategy(self, *args):
         try:
-            print(f"GrowthStrategyService!")
+            print(f"OllamaStrategyService!")
 
             ages = args[0]
             genders = args[1]
@@ -34,7 +34,7 @@ class GrowthStrategyServiceImpl(GrowthStrategyService):
             userToken = args[8]
             request_id = args[9]
 
-            return await self.__GrowthStrategyRepository.fetch_growth_strategy(content_categories, ages, genders,
+            return await self.__OllamaStrategyRepository.fetch_growth_strategy(content_categories, ages, genders,
             visibility, platforms, investment_amount, upload_frequency, interested_influencer, userToken, request_id)
         except Exception as e:
             print(e)
